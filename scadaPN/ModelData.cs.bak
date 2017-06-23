@@ -1,0 +1,1167 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using scadaPN;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+
+using Windows.Devices.SerialCommunication;
+using Windows.Devices.Enumeration;
+using Windows.Storage.Streams;
+using System.Threading;
+
+namespace scadaPN
+{
+
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// 
+    /// Интерфейсы подключения: RS-485, TCP-IP-сеть, ...
+    /// 
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Базовый interface для всех типов интерфейсов, который задаёт общие свойства и типы поведения для всех типов интерфейсов
+    public interface IInterface
+    {
+        // МЕТОДЫ:
+
+        // Открыть интерфейс
+        bool Open();
+
+        // Проверить соединение
+        bool IsOpen();
+
+        // Закрыть интерфейс
+        bool Close();
+
+        // Очисть входной буфер интерфейса
+        void ClearInBuffer();
+
+        // Очисть выходной буфер интерфейса
+        void ClearOutBuffer();
+
+        // Чтение данных из интерфейса
+        bool ReadData(ref byte[] data);
+
+        // Запись данных в интерфейс
+        bool WriteData(byte[] data);
+
+        // Установить параметры интерфейса устройством
+        void SetParamsByDevice(List<int> paramsByDevice);
+
+        // Свойства:
+
+        // Параметры интерфейса (например: для RS-485: m_InterfaceParams[0] - номер COM-порта, m_InterfaceParams[1] - скорость COM-порта, ...)
+        List<int> InterfaceParams { get; }
+    }
+
+    // Интерфейс Rs-485
+    public class InterfaceRS485 : IInterface
+    {
+        // МЕТОДЫ:
+
+        // Открыть COM-порт
+        public bool Open()
+        {
+            if (m_InterfaceParams.Count < 5)
+                return false;
+
+            try
+            {
+                string selector = SerialDevice.GetDeviceSelector("COM" + m_InterfaceParams[0]);
+                return true;
+                //Task delay = Task.Delay(1500);
+                //delay.Wait();
+
+                Task<DeviceInformationCollection> taskInfo = (Task<DeviceInformationCollection>)DeviceInformation.FindAllAsync(selector).AsTask();
+
+                taskInfo.Wait();
+                DeviceInformationCollection devices = taskInfo.Result;
+
+                if (devices.Any())
+                {
+                    DeviceInformation deviceInfo = devices.First();
+
+                    Task<SerialDevice> taskDevice = (Task<SerialDevice>)SerialDevice.FromIdAsync(deviceInfo.Id).AsTask();
+
+                    taskDevice.Wait();
+                    m_SerialDevice = taskDevice.Result;
+
+                    m_SerialDevice.BaudRate = (uint)m_InterfaceParams[1];
+                    m_SerialDevice.DataBits = (ushort)m_InterfaceParams[2];
+
+                    if (m_InterfaceParams[3] == 1)
+                        m_SerialDevice.StopBits = SerialStopBitCount.One;
+                    else
+                        m_SerialDevice.StopBits = SerialStopBitCount.Two;
+
+                    switch ((m_InterfaceParams[4]))
+                    {
+                        case 0:
+                        default:
+                            m_SerialDevice.Parity = SerialParity.None;
+                            break;
+
+                        case 1:
+                            m_SerialDevice.Parity = SerialParity.Odd;
+                            break;
+
+                        case 2:
+                            m_SerialDevice.Parity = SerialParity.Even;
+                            break;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                //MessageDialog popup = new MessageDialog("Sorry, no device found.");
+                //await popup.ShowAsync();
+                m_SerialDevice = null;
+                string err = "Error open serial port";
+                return false;
+            }
+        }
+
+        // Проверить соединение
+        public virtual bool IsOpen()
+        {
+            return (m_SerialDevice != null);
+        }
+
+        // Закрыть COM-порт
+        virtual public bool Close()
+        {
+            //Ensure port is opened before attempting to close:
+            if (IsOpen())
+            {
+                try
+                {
+                    m_SerialDevice.Dispose();
+                    m_SerialDevice = null;
+                }
+                catch (Exception err)
+                {
+                    //status = "Error closing " + sp.PortName + ": " + err.Message;
+                    return false;
+                }
+
+                //status = sp.PortName + " closed successfully";
+                return true;
+            }
+            else
+            {
+                //modbusStatus = sp.PortName + " is not open";
+                return false;
+            }
+        }
+
+        // Очисть входной буфер интерфейса
+        public virtual void ClearInBuffer()
+        {
+            //m_SerialPort.DiscardOutBuffer();
+        }
+
+        // Очисть выходной буфер интерфейса
+        public virtual void ClearOutBuffer()
+        {
+            //m_SerialPort.DiscardOutBuffer();
+        }
+
+        // Чтение данных из COM-порта
+
+        public virtual bool ReadData(ref byte[] data)
+        {
+            try
+            {
+                DataReader reader = new DataReader(m_SerialDevice.InputStream);
+                CancellationTokenSource cts = new CancellationTokenSource((int)m_Timeouts[(int)Timeouts.Response]);
+
+                Task<uint> task = reader.LoadAsync((uint)data.Length).AsTask(cts.Token);
+
+                task.Wait();
+                uint readedBytes = task.Result;
+
+                if (readedBytes > 0)
+                {
+                    int i = 0;
+                    for (i = 0; i < readedBytes; i++)
+                        data[i] = reader.ReadByte();
+
+                    if (readedBytes < data.Length)
+                    {
+                        cts = new CancellationTokenSource((int)m_Timeouts[(int)Timeouts.BetweenRespByte]);
+                        task = reader.LoadAsync((uint)data.Length).AsTask(cts.Token);
+
+                        task.Wait();
+                        readedBytes = task.Result;
+
+                        for (; i < readedBytes; i++)
+                            data[i] = reader.ReadByte();
+                    }
+                    reader.DetachStream();
+                    return true;
+                }
+
+                reader.DetachStream();
+                reader = null;
+
+                return false;
+            }
+            catch (Exception err)
+            {
+                //    //status = "Error closing " + sp.PortName + ": " + err.Message;
+                //    throw new Exception("Error read data from Serial port");
+                return false;
+            }
+        }
+
+        // Запись данных в COM-порт
+        public virtual bool WriteData(byte[] data)
+        {
+            try
+            {
+                DataWriter writer = new DataWriter(m_SerialDevice.OutputStream);
+
+                writer.WriteBytes(data);
+                //CancellationTokenSource cts = new CancellationTokenSource(m_SerialDevice.WriteTimeout);
+                Task task = writer.StoreAsync().AsTask(/*cts.Token*/);
+
+                task.Wait();
+                writer.DetachStream();
+                writer = null;
+
+                return true;
+            }
+            catch (Exception err)
+            {
+                //    //status = "Error closing " + sp.PortName + ": " + err.Message;
+                //    throw new Exception("Error read data from Serial port");
+                return false;
+            }
+
+        }
+
+        // Установить параметры интерфейса устройством
+        public virtual void SetParamsByDevice(List<int> paramsByDevice)
+        {
+            if (paramsByDevice.Count > 0)
+            {
+                //m_SerialPort.ReadTimeout = paramsByDevice[0];
+                for (int i = 0; i < paramsByDevice.Count; i++)
+                {
+                    if (i < (int)Timeouts.Count)
+                        m_Timeouts[i] = (uint)paramsByDevice[i];
+                }
+            }
+        }
+
+        // СВОЙСТВА:
+
+        public List<int> InterfaceParams
+        {
+            get { return m_InterfaceParams; }
+        }
+
+        // ДАННЫЕ:
+
+        // Параметры интерфейса RS-485: m_InterfaceParams[0] - номер COM-порта, m_InterfaceParams[1] - скорость COM-порта, ...
+        private List<int> m_InterfaceParams = new List<int>();
+
+        // Последовательный порт
+        private SerialDevice m_SerialDevice;
+
+        public enum Timeouts
+        {
+            // Таймаут ответа устройства
+            Response = 0,
+
+            // Таймаут между запросами к устройству
+            BetweenReq = 1,
+
+            // Таймаут между 2 байтами ответа устройства
+            BetweenRespByte = 2,
+
+            // Количество таймаутов
+            Count = 3
+        }
+
+        // Массив таймаутов
+        private uint[] m_Timeouts = new uint[(int)Timeouts.Count];
+
+    }
+
+    //// Интерфейс TCP-IP
+    //public class InterfaceTcpIP : IInterface
+    //{
+    //    // МЕТОДЫ:
+
+    //    // Открыть TCP-соединение
+    //    virtual public bool Open();
+
+    //    // Закрыть TCP-соединение
+    //    virtual public bool Close();
+
+    //    // Чтение данных из TCP-соединения
+    //    virtual public byte[] ReadData();
+
+    //    // Запись данных в TCP-соединение
+    //    virtual public bool WriteData(byte[] data);
+
+    //    // ДАННЫЕ:
+
+    //    // Параметры интерфейса TCP-IP: m_InterfaceParams[0] - IP адрес, m_InterfaceParams[1] - TCP-порт
+    //    protected List<int> m_InterfaceParams;
+    //}
+
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// 
+    /// Протоколы ModbusRTU, ModbusTCP, SNMP
+    /// 
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Базовый interface для всех типов протоколов, который задаёт общие свойства и типы поведения для всех типов протоколов
+    public interface IProtocol
+    {
+        // МЕТОДЫ:
+
+        // Запрос данных по протоколу
+        List<string> GetData(IInterface protocolInterface, int deviceAddress, List<int> protocolParams);
+    }
+
+    // Протокол Modbus-RTU
+    public class ProtocolModbusRTU : IProtocol
+    {
+        // МЕТОДЫ:
+
+        // Запрос данных по протоколу Modbus-RTU: 
+        // protocolInterface.m_InterfaceParams[0] - номер COM-порта
+        // protocolInterface.m_InterfaceParams[1] - скорость COM-порта, ...
+        // deviceAddress - Modbus-адрес устройства
+        // protocolParams[0] - Modbus-адрес
+        // protocolParams[1] - количество Modbus-регистров
+        public virtual List<string> GetData(IInterface protocolInterface, int deviceAddress, List<int> protocolParams)
+        {
+            // Простой вариант: protocolParams[0] - Modbus-адрес, protocolParams[1] - количество Modbus-регистров, protocolParams[2] - тип данных
+            byte address = (byte)deviceAddress;
+            ushort reg_start = (ushort)protocolParams[0];
+            ushort reg_count = (ushort)protocolParams[1];
+            int data_type = protocolParams[2];
+
+            List<string> valuesList = new List<string>();
+
+            short[] values = new short[reg_count];
+            if (ReadRegistersByFunc3(protocolInterface, address, reg_start, reg_count, ref values))
+            {
+                //for (int i = 0; i < values.Length; i++)
+                if (reg_count == 1)
+                {
+                    if (data_type == UNSIGNED_TYPE)
+                        valuesList.Add(Convert.ToString((ushort)values[0]));
+                    else if (data_type == SIGNED_TYPE)
+                        valuesList.Add(Convert.ToString(values[0]));
+                }
+                else if (reg_count == 2)
+                {
+                    if (data_type == UNSIGNED_TYPE)
+                    {
+                        uint tmp = (uint)values[0];
+                        tmp = tmp << 16;
+                        uint value = ((uint)(ushort)values[1] | tmp);
+
+                        valuesList.Add(Convert.ToString(value));
+                    }
+                    else if (data_type == SIGNED_TYPE)
+                    {
+                        int tmp = (int)values[0];
+                        tmp = tmp << 16;
+                        int value = ((int)values[1] | tmp);
+
+                        valuesList.Add(Convert.ToString(value));
+                    }
+                    else if (data_type == FLOAT_TYPE)
+                    {
+                        byte[] bytes = new byte[4];
+                        bytes[0] = (byte)values[0];
+                        bytes[1] = (byte)(values[0] >> 8);
+                        bytes[2] = (byte)values[1];
+                        bytes[3] = (byte)(values[1] >> 8);
+                        valuesList.Add(Convert.ToString(BitConverter.ToSingle(bytes, 0)));
+                    }
+                }
+            }
+
+            return valuesList;
+        }
+
+        #region CRC Computation
+        private void GetCRC(byte[] message, ref byte[] CRC)
+        {
+            //Function expects a modbus message of any length as well as a 2 byte CRC array in which to 
+            //return the CRC values:
+
+            ushort CRCFull = 0xFFFF;
+            byte CRCHigh = 0xFF, CRCLow = 0xFF;
+            char CRCLSB;
+
+            for (int i = 0; i < (message.Length) - 2; i++)
+            {
+                CRCFull = (ushort)(CRCFull ^ message[i]);
+
+                for (int j = 0; j < 8; j++)
+                {
+                    CRCLSB = (char)(CRCFull & 0x0001);
+                    CRCFull = (ushort)((CRCFull >> 1) & 0x7FFF);
+
+                    if (CRCLSB == 1)
+                        CRCFull = (ushort)(CRCFull ^ 0xA001);
+                }
+            }
+            CRC[1] = CRCHigh = (byte)((CRCFull >> 8) & 0xFF);
+            CRC[0] = CRCLow = (byte)(CRCFull & 0xFF);
+        }
+        #endregion
+
+        #region Build Message
+        private void BuildMessage(byte address, byte type, ushort start, ushort registers, ref byte[] message)
+        {
+            //Array to receive CRC bytes:
+            byte[] CRC = new byte[2];
+
+            message[0] = address;
+            message[1] = type;
+            message[2] = (byte)(start >> 8);
+            message[3] = (byte)start;
+            message[4] = (byte)(registers >> 8);
+            message[5] = (byte)registers;
+
+            GetCRC(message, ref CRC);
+            message[message.Length - 2] = CRC[0];
+            message[message.Length - 1] = CRC[1];
+        }
+        #endregion
+
+        #region Check Response
+        private bool CheckResponse(byte[] response)
+        {
+            //Perform a basic CRC check:
+            byte[] CRC = new byte[2];
+            GetCRC(response, ref CRC);
+            if (CRC[0] == response[response.Length - 2] && CRC[1] == response[response.Length - 1])
+                return true;
+            else
+                return false;
+        }
+        #endregion
+
+        #region Function 3 - Read Registers
+        private bool ReadRegistersByFunc3(IInterface interface485, byte address, ushort start, ushort registers, ref short[] values)
+        {
+            //Ensure port is open:
+            if (interface485.IsOpen())
+            {
+                //Clear in/out buffers:
+                interface485.ClearOutBuffer();
+                interface485.ClearInBuffer();
+
+                //Function 3 request is always 8 bytes:
+                byte[] message = new byte[8];
+
+                //Function 3 response buffer:
+                byte[] response = new byte[5 + 2 * registers];
+
+                //Build outgoing modbus message:
+                BuildMessage(address, (byte)3, start, registers, ref message);
+
+                //Send modbus message to Serial Port and recieve response from Serial Port:
+                try
+                {
+                    interface485.Close();
+                    interface485.Open();
+                    if (interface485.WriteData(message))
+                        interface485.ReadData(ref response);
+                }
+                catch (Exception err)
+                {
+                    //modbusStatus = "Error in read event: " + err.Message;
+                    return false;
+                }
+
+                //Evaluate message:
+                if (CheckResponse(response))
+                {
+                    //Return requested register values:
+                    for (int i = 0; i < (response.Length - 5) / 2; i++)
+                    {
+                        values[i] = response[2 * i + 3];
+                        values[i] <<= 8;
+                        values[i] += response[2 * i + 4];
+                    }
+                    //modbusStatus = "Read successful";
+                    return true;
+                }
+                else
+                {
+                    //modbusStatus = "CRC error";
+                    return false;
+                }
+            }
+            else
+            {
+                //modbusStatus = "Serial port not open";
+                return false;
+            }
+
+        }
+        #endregion
+
+        public const int UNSIGNED_TYPE = 0;
+        public const int SIGNED_TYPE = 1;
+        public const int FLOAT_TYPE = 2;
+    }
+
+    //// Протокол Modbus-TCP
+    //public class ProtocolModbusTCP : IProtocol
+    //{
+    //    // МЕТОДЫ:
+
+    //    // Запрос данных по протоколу Modbus-TCP
+    //    public virtual List<string> GetData(IInterface protocolInterface, int deviceAddress, List<int> protocolParams);
+    //}
+
+    //// Протокол SNMP
+    //public class ProtocolSnmp : IProtocol
+    //{
+    //    // МЕТОДЫ:
+
+    //    // Запрос данных по протоколу SNMP
+    //    public virtual List<string> GetData(IInterface protocolInterface, int deviceAddress, List<int> protocolParams);
+    //}
+
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// 
+    /// Параметры оборудования с описание и значениями параметров протокола (например если это параметр Modbus-устройства, то
+    /// значения параметров протокола: m_ProtocolParams[0] - адрес Modbus-регистра, m_ProtocolParams[1] - количество Modbus-регистров )
+    /// 
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Значение параметра
+    //public class Value
+    //{
+    //    // ДАННЫЕ:
+
+    //    // Значение дискретного параметра
+    //    public int DisceteValue;
+
+    //    // Значение аналогового параметра в физ. единицах
+    //    public double AnalogValue;
+
+    //    // Признак корректности параметра
+    //    public bool IsValidValue; 
+    //}
+
+    public class Parameter : INotifyPropertyChanged
+    {
+        // МЕТОДЫ:
+        public Parameter(SyncForParameterValue syncForParameterValue)
+        {
+            m_SyncForParameterValue = syncForParameterValue;
+        }
+
+        //public void SetSyncForParameterValue(SyncForParameterValue syncForParameterValue)
+        //{
+        //    m_SyncForParameterValue = syncForParameterValue;
+        //}
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        // This method is called by the Set accessor of each property.
+        // The CallerMemberName attribute that is applied to the optional propertyName
+        // parameter causes the property name of the caller to be substituted as an argument.
+        public void NotifyPropertyChanged()
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs("Value"));
+            }
+        }
+
+        // Свойство Value
+        public string Value
+        {
+            get
+            {
+                string sValue;
+                lock (m_SyncObj)
+                {
+                    sValue = m_Value;
+                }
+                return sValue;
+            }
+
+            set
+            {
+                bool isUpdate = false;
+                lock (m_SyncObj)
+                {
+                    if (m_Value != value)
+                    {
+                        isUpdate = true;
+                        m_Value = value;
+                    }
+                }
+
+                if (isUpdate)
+                    m_SyncForParameterValue.UpdateParameter(this);
+            }
+        }
+
+        // ДАННЫЕ:
+
+        // Константы размерности
+        public const int AMPER = 0;
+        public const int VOLT = 1;
+        public const int DEGREE_CELS = 2;
+        public const int HOUR = 3;
+
+        // Константы типа
+        public const int DISCRETE = 0;
+        public const int ANALOG = 1;
+
+        // Наименование параметра
+        public string m_Name;
+
+        // Описание параметра
+        public string m_Description;
+
+        // Размерность параметра AMPER, VOLT, ...
+        public int m_Dimension;
+
+        // Тип параметра DISCRETE, ANALOG
+        public int m_Type;
+
+        // Текущее значение параметра типа Value
+        public string m_Value = "???"; // текущее значение параметра типа Value (любой тип данных хранится в виде строки)
+
+        // Признак корректности параметра
+        public bool IsValidValue;
+
+        // Время обновления параметра (через сколько мсек должен запрашиваться этот парметер из устройства)
+        public uint m_RefrashTime;
+
+        // Коэффициент K для получения значения параметра в физ. велечине: Value_физ. = K * Value + B
+        public double m_CoefK;
+
+        // Коэффициент B для получения значения параметра в физ. велечине: Value_физ. = K * Value + B
+        public double m_CoefB;
+
+        // Значениями параметров протокола (например если это параметр Modbus-устройства, то
+        // значения параметров протокола: m_ProtocolParams[0] - адрес Modbus-регистра, m_ProtocolParams[1] - количество Modbus-регистров )
+        public List<int> m_ProtocolParams = new List<int>();
+
+        public object m_SyncObj = new object();
+
+        public SyncForParameterValue m_SyncForParameterValue;
+    }
+
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// 
+    /// Типовые устройства: панель PW2.0/2.1, контроллер ПН4/8
+    /// 
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Базовый interface для всех типов устройст, который задаёт общие свойства и типы поведения для всех типов устройств
+    public interface IDevice
+    {
+        // МЕТОДЫ:
+
+        // Чтение параметров устройства
+        void ReadParameters(Connection connection);
+
+        // СВОЙСТВА:
+        int Number { get; set; }
+
+        int Address { get; set; }
+
+        // Параметры интерфейса специфичные для данного типа устройства, например, таймаут ответа устройств
+        List<int> ParamsForInterface { get; set; }
+
+        // Cвойство readonly для binding с ViewsModel
+        ObservableCollection<Parameter> Params { get; }
+    }
+
+    // Тип устройства: Панель PW2.0/2.1
+    public class DevicePW : IDevice
+    {
+        // МЕТОДЫ:
+
+        // Констуктор класса с параметром
+        public DevicePW(IProtocol protocol, SyncForParameterValue syncForParameterValue)
+        {
+            m_Protocol = protocol; // протокол ModbusRTU
+
+            // Задаём параметры интерфейса специфичные для данного типа устройства, например, таймаут ответа устройств
+
+            // Таймаут ответа устройства
+            m_ParamsForInterface.Add(500);
+
+            // Таймаут между запросами к устройству
+            m_ParamsForInterface.Add(50);
+
+            // Таймаут между 2 байтами ответа устройства
+            m_ParamsForInterface.Add(50);
+
+            // Параметр Uacc
+            Parameter parameter0 = new Parameter(syncForParameterValue);
+            Parameter parameter = parameter0;
+            parameter.m_Name = "Uacc";
+            parameter.m_Dimension = Parameter.AMPER;
+            parameter.m_Type = Parameter.ANALOG;
+            parameter.m_RefrashTime = 500;
+            parameter.m_CoefK = 0.05;
+            parameter.m_CoefB = 0.0;
+
+            parameter.m_ProtocolParams.Add(201); // Моdbus-регистр
+            parameter.m_ProtocolParams.Add(1); // количество Моdbus-регистров
+            parameter.m_ProtocolParams.Add(ProtocolModbusRTU.UNSIGNED_TYPE); // тип данных
+            m_Parameters.Add(parameter);
+
+            // Параметр MotoHour
+            Parameter parameter1 = new Parameter(syncForParameterValue);
+            parameter = parameter1;
+            parameter.m_Name = "MotoHour";
+            parameter.m_Dimension = Parameter.HOUR;
+            parameter.m_Type = Parameter.ANALOG;
+            parameter.m_RefrashTime = 500;
+            parameter.m_CoefK = 0.05;
+            parameter.m_CoefB = 0.0;
+
+            parameter.m_ProtocolParams.Add(203); // Моdbus-регистр
+            parameter.m_ProtocolParams.Add(2); // количество Моdbus-регистров
+            parameter.m_ProtocolParams.Add(ProtocolModbusRTU.UNSIGNED_TYPE); // тип данных
+            m_Parameters.Add(parameter);
+
+            // Параметр Toil
+            Parameter parameter2 = new Parameter(syncForParameterValue);
+            parameter = parameter2;
+            parameter.m_Name = "Toil";
+            parameter.m_Dimension = Parameter.DEGREE_CELS;
+            parameter.m_Type = Parameter.ANALOG;
+            parameter.m_RefrashTime = 500;
+            parameter.m_CoefK = 0.03125;
+            parameter.m_CoefB = -273;
+
+            parameter.m_ProtocolParams.Add(198); // Моdbus-регистр
+            parameter.m_ProtocolParams.Add(1); // количество Моdbus-регистров
+            parameter.m_ProtocolParams.Add(ProtocolModbusRTU.UNSIGNED_TYPE); // тип данных
+            m_Parameters.Add(parameter);
+
+            // ...
+        }
+
+        // Чтение параметров из устройства по протоколу Modbus-RTU
+        public virtual void ReadParameters(Connection connection)
+        {
+
+            // Устанавливаем параметры интерфейса специфичные для данного типа устройства, например, таймаут ответа устройств
+            connection.m_Interface.SetParamsByDevice(m_ParamsForInterface);
+
+            // Простой вариант
+            foreach (Parameter parameter in m_Parameters)
+            {
+                //public async virtual Task<List<string>> GetData(IInterface protocolInterface, int deviceAddress, List<int> protocolParams)
+
+                // Таймаут между запросами к устройству
+                if (m_ParamsForInterface.Count >= 2 && m_ParamsForInterface[1] > 0)
+                {
+                    Task delay = Task.Delay(m_ParamsForInterface[1]);
+                    delay.Wait();
+                }
+
+                List<string> values = m_Protocol.GetData(connection.m_Interface, m_Address, parameter.m_ProtocolParams);
+                if (values.Count > 0)
+                {
+                    parameter.IsValidValue = true;
+                    if (parameter.m_CoefK != 1.0 || parameter.m_CoefB != 0.0)
+                    {
+                        parameter.Value = Convert.ToString(Convert.ToInt32(values[0]) * parameter.m_CoefK + parameter.m_CoefB);
+                    }
+                    else
+                        parameter.Value = values[0];
+                }
+                else
+                {
+                    parameter.IsValidValue = false;
+                    parameter.Value = "???";
+                }
+            }
+        }
+
+        // СВОЙСТВА:
+        public int Number
+        {
+            get { return m_Number; }
+            set { m_Number = value; }
+        }
+
+        public int Address
+        {
+            get { return m_Address; }
+            set { m_Address = value; }
+        }
+
+        // Cвойство readonly для binding с ViewsModel
+        public ObservableCollection<Parameter> Params
+        {
+            get
+            {
+                return m_Parameters;
+            }
+        }
+
+        // Параметры интерфейса специфичные для данного типа устройства, например, таймаут ответа устройств
+        public List<int> ParamsForInterface
+        {
+            get { return m_ParamsForInterface; }
+            set { m_ParamsForInterface = value; }
+        }
+
+        // ДАННЫЕ:
+
+        // Порядковый номер устройства 
+        private int m_Number;
+
+        // Адрес устройства для запросов по протоколу Modbus-RTU
+        private int m_Address;
+
+        // Cписок параметров устройства в виде ObservableCollection
+        private ObservableCollection<Parameter> m_Parameters = new ObservableCollection<Parameter>();
+
+        // Параметры интерфейса специфичные для данного типа устройства, например, таймаут ответа устройств
+        private List<int> m_ParamsForInterface = new List<int>();
+
+        // Протокол устройства ProtocolModbusRTU
+        private IProtocol m_Protocol;
+
+        private List<int> m_ProtocolParamsForInterface = new List<int>();
+    }
+
+    //// Тип устройства: Панель ПН4/8
+    //public class DevicePN : IDevice
+    //{
+    //    // МЕТОДЫ:
+
+    //    // Констуктор класса с параметром
+    //    // Констуктор класса с параметром
+    //    public DevicePN(IProtocol protocol, SyncForParameterValue syncForParameterValue)
+    //    {
+    //        m_Protocol = protocol; // протокол ModbusRTU
+
+    //        // Задаём параметры интерфейса специфичные для данного типа устройства, например, таймаут ответа устройств
+
+    //        // Таймаут ответа устройства
+    //        m_ParamsForInterface.Add(1000);
+
+    //        // Таймаут между запросами к устройству
+    //        m_ParamsForInterface.Add(50);
+
+    //        // Таймаут между 2 байтами ответа устройства
+    //        m_ParamsForInterface.Add(50);
+
+    //        // Параметр Uacc
+    //        Parameter parameter0 = new Parameter(syncForParameterValue);
+    //        Parameter parameter = parameter0;
+    //        parameter.m_Name = "Uacc";
+    //        parameter.m_Dimension = Parameter.AMPER;
+    //        parameter.m_Type = Parameter.ANALOG;
+    //        parameter.m_RefrashTime = 500;
+    //        parameter.m_CoefK = 0.05;
+    //        parameter.m_CoefB = 0.0;
+
+    //        parameter.m_ProtocolParams.Add(201); // Моdbus-регистр
+    //        parameter.m_ProtocolParams.Add(1); // количество Моdbus-регистров
+    //        parameter.m_ProtocolParams.Add(ProtocolModbusRTU.UNSIGNED_TYPE); // тип данных
+    //        m_Parameters.Add(parameter);
+
+    //        // Параметр MotoHour
+    //        Parameter parameter1 = new Parameter(syncForParameterValue);
+    //        parameter = parameter1;
+    //        parameter.m_Name = "MotoHour";
+    //        parameter.m_Dimension = Parameter.HOUR;
+    //        parameter.m_Type = Parameter.ANALOG;
+    //        parameter.m_RefrashTime = 500;
+    //        parameter.m_CoefK = 0.05;
+    //        parameter.m_CoefB = 0.0;
+
+    //        parameter.m_ProtocolParams.Add(203); // Моdbus-регистр
+    //        parameter.m_ProtocolParams.Add(2); // количество Моdbus-регистров
+    //        parameter.m_ProtocolParams.Add(ProtocolModbusRTU.UNSIGNED_TYPE); // тип данных
+    //        m_Parameters.Add(parameter);
+
+    //        // Параметр Toil
+    //        Parameter parameter2 = new Parameter(syncForParameterValue);
+    //        parameter = parameter2;
+    //        parameter.m_Name = "Toil";
+    //        parameter.m_Dimension = Parameter.DEGREE_CELS;
+    //        parameter.m_Type = Parameter.ANALOG;
+    //        parameter.m_RefrashTime = 500;
+    //        parameter.m_CoefK = 0.03125;
+    //        parameter.m_CoefB = -273;
+
+    //        parameter.m_ProtocolParams.Add(198); // Моdbus-регистр
+    //        parameter.m_ProtocolParams.Add(1); // количество Моdbus-регистров
+    //        parameter.m_ProtocolParams.Add(ProtocolModbusRTU.UNSIGNED_TYPE); // тип данных
+    //        m_Parameters.Add(parameter);
+
+    //        // ...
+    //    }
+
+    //    // Чтение параметров из устройства по протоколу Modbus-TCP
+    //    public virtual void ReadParameters(Connection connection);
+
+    //    // ДАННЫЕ:
+
+    //    // Порядковый номер устройства 
+    //    private int m_Number;
+
+    //    // Адрес устройства для запросов по протоколу Modbus-RTU
+    //    private int m_Address;
+
+    //    // Cписок параметров устройства в виде ObservableCollection
+    //    private ObservableCollection<Parameter> m_Parameters = new ObservableCollection<Parameter>();
+
+    //    // Параметры интерфейса специфичные для данного типа устройства, например, таймаут ответа устройств
+    //    private List<int> m_ParamsForInterface = new List<int>();
+
+    //    // Протокол устройства ProtocolModbusRTU
+    //    private IProtocol m_Protocol;
+
+    //    private List<int> m_ProtocolParamsForInterface = new List<int>();
+    //}
+
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// 
+    /// Точки подключения к устройствам
+    /// 
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public class Connection
+    {
+        // МЕТОДЫ:
+
+        // Открыть соединение (установить подключение по COM-порту, TCP-IP, ...)
+        public bool Open()
+        {
+            return m_Interface.Open();
+        }
+
+        // Закрыть соединение 
+        public bool Close()
+        {
+            return m_Interface.Close();
+        }
+
+        // Чтение параметров из устройств, подключенных к данной точки подключения (например, устройства на шине RS-485)
+        public void ReadParametesFromDevices()
+        {
+            foreach (IDevice device in m_Devices)
+            {
+                device.ReadParameters(this /*передаём ссылку на данное Connection*/);
+            }
+        }
+
+        // ДАННЫЕ:
+
+        // Список устройств, подключенных к данной точки подключения (например, устройства на шине RS-485)
+        public ObservableCollection<IDevice> m_Devices = new ObservableCollection<IDevice>();
+
+        // Интерфейс подключения RS-485, TCP-IP
+        public IInterface m_Interface;
+    }
+
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// 
+    /// Класс DataModel для взаимодействия с ViewsModel
+    /// 
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public class DataModel
+    {
+        // МЕТОДЫ:
+
+        // Добавить точку подключения
+        public void AddConnection(Connection connection)
+        {
+            m_Connections.Add(connection);
+        }
+
+        // Подключиться к устройствам через точки подключения
+        public void OpenConnections()
+        {
+            foreach (Connection connection in m_Connections)
+            {
+                connection.Open();
+            }
+        }
+
+        // Отключиться от устройств
+        public void CloseConnections()
+        {
+            foreach (Connection connection in m_Connections)
+            {
+                connection.Close();
+            }
+        }
+
+        private Task ReadParametesFromAllDevices()
+        {
+            return Task.Run(() =>
+            {
+                while (true)
+                {
+                    foreach (Connection connection in m_Connections)
+                    {
+                        connection.ReadParametesFromDevices();
+                    }
+
+                    UpdateDataInDevicesByNumbers();
+                    //Task delay = Task.Delay(1000);
+                    //delay.Wait();
+                }
+
+            });
+        }
+
+        // Запуск циклического чтения параметров из всех устройств
+        public void StartReadParametesFromAllDevices()
+        {
+            Task readTask = ReadParametesFromAllDevices();
+        }
+
+        // Обновить m_DevicesByNumbers для binding
+        protected void UpdateDataInDevicesByNumbers()
+        {
+        }
+
+        // CВОЙСТВА:
+
+        // Свойство readonly для ViewsModel
+        public ObservableCollection<IDevice> Devices
+        {
+            get
+            {
+                //Пока так !!! ИСПРАВИТЬ
+                //return m_DevicesByNumbers;
+                return m_Connections[0].m_Devices;
+            }
+        }
+
+        // ДАННЫЕ:
+
+        // Точки подключения
+        protected List<Connection> m_Connections = new List<Connection>();
+
+        // устройства, отсортированные по порядковому номеру устройствас
+        protected List<IDevice> m_DevicesByNumbers = new List<IDevice>();
+    }
+
+    public class SyncForParameterValue
+    {
+        public SyncForParameterValue(SynchronizationContext syncContext, SendOrPostCallback updateParameterFunc)
+        {
+            m_SyncContext = syncContext;
+            m_SyncUpdateParamerFunc = updateParameterFunc;
+        }
+
+        public void UpdateParameter(Parameter parameter)
+        {
+            // говорим что в UI потоке нужно выполнить метод UpdateParameter 
+            // и передать ему в качестве аргумента ссылку на параметр
+            m_SyncContext.Post(m_SyncUpdateParamerFunc, parameter);
+        }
+
+        private SynchronizationContext m_SyncContext;
+        private SendOrPostCallback m_SyncUpdateParamerFunc;
+    }
+
+    ///// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///// 
+    ///// Класс ViewsModel
+    ///// 
+    ///// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///// 
+    public class ViewsMode
+    {
+        public DataModel DM;
+
+        // Заполняем DataModel данными
+        public void FillDevices(SyncForParameterValue syncForParameterValue)
+        {
+            // Создаём экземпляр класса InterfaceRS485 для работы с COM1
+            IInterface interface0 = new InterfaceRS485();
+
+            interface0.InterfaceParams.Add(1); // номер COM-порта
+            interface0.InterfaceParams.Add(19200); // скорость
+            interface0.InterfaceParams.Add(8); // бит данных
+            interface0.InterfaceParams.Add(0); // паритет
+            interface0.InterfaceParams.Add(1); // стоп бит
+
+            // Создаём экземпляр класса ProtocolModbusRTU для работы с ModbusRTU
+            IProtocol protocolModbusRTU = new ProtocolModbusRTU();
+
+            // Создаём первый экземпляр класса DevicePW для панели PowerWizard
+            IDevice device0 = new DevicePW(protocolModbusRTU, syncForParameterValue);
+            device0.Number = 0; // порядковый номер устройства
+            device0.Address = 2; // адрес устройства 
+
+            // Создаём второй экземпляр класса DevicePW для панели PowerWizard
+            IDevice device1 = new DevicePW(protocolModbusRTU, syncForParameterValue);
+            device1.Number = 1; // порядковый номер устройства
+            device1.Address = 1; // адрес устройства 
+
+            // Параметры DevicePW в конструкторе DevicPW уже заполнены в конструкторе класса DevicePW
+            // ... Этот код из конструктора класса DevicePW
+            //public DevicePW(IProtocol protocol)
+            //{
+            //    m_Protocol = protocol; // протокол ModbusRTU
+
+            //    Parameter parameter = new Parameter();
+            //    parameter.m_Name = "U1";
+            //    parameter.m_Dimension = VOLT;
+            //    parameter.m_Type = ANALOG;
+            //    parameter.m_RefrashTime = 500;
+            //    parameter.m_CoefK = 1.0;
+            //    parameter.m_CoefB = 0.0;
+
+            //    parameter.m_ProtocolParams.Add(1000); // Моdbus-регистр
+            //    parameter.m_ProtocolParams.Add(2); // количество Моdbus-регистров
+            //    m_Parameters.Add(parameter);
+            //    // ...
+            //}
+
+            // Создаём точку подключения к двум панелям PowerWizard чрез COM1 по шине RS-485
+            Connection connection0 = new Connection();
+            connection0.m_Interface = interface0;
+            connection0.m_Devices.Add(device0);
+            connection0.m_Devices.Add(device1);
+
+            // Создаём DataModel и добавляем точку подключения в DataModel
+            DM = new DataModel();
+            DM.AddConnection(connection0);
+
+            // Подключаемся к устройствам через точки подключения
+            DM.OpenConnections();
+
+            // Запуск чтения параметров из всех устройств
+            DM.StartReadParametesFromAllDevices();
+
+            // Пример получения параметров для binding
+            // string value0 = DM.Devices[0].Params[0].Value;
+            // string value1 = DM.Devices[0].Params[1].Value;
+        }
+    }
+}
+

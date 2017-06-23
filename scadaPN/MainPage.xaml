@@ -1,0 +1,245 @@
+﻿<Page
+    x:Class="scadaPN.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:scadaPN"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d" Loaded="Page_Loaded">
+    <Grid x:Name="grid1">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="40"/>
+        </Grid.RowDefinitions>
+        <Grid Margin="-1,0,0,2" Grid.ColumnSpan="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="51"/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+
+            <Button x:Name="btn_menu" Content="&#xE700;" FontFamily="Segoe MDL2 Assets" Style="{StaticResource buttonStyle}" Click="btn_menu_Click"></Button>
+            <StackPanel Grid.Column="1" Background="Purple" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" BorderBrush="Gray" BorderThickness="0 0 1 0">
+                <TextBlock x:Name="textHeader" Foreground="White"  HorizontalAlignment="Center" Margin="0 10 0 0"></TextBlock>
+            </StackPanel>
+
+            <Button x:Name="btn_home" Grid.Column="2" Style="{StaticResource buttonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource textStyle}">&#xE80F;</TextBlock>
+                    <TextBlock>Главная</TextBlock>
+                </StackPanel>
+            </Button>
+            <Button x:Name="btn_menu2" Content="Меню" Grid.Column="3" Style="{StaticResource buttonStyle}" Click="btn_menu2_Click"></Button>
+            <Button x:Name="btn_menu3" Content="menu" Grid.Column="4" Style="{StaticResource buttonStyle}"></Button>
+            <Button x:Name="btn_menu4" Content="Меню" Grid.Column="5" Style="{StaticResource buttonStyle}"></Button>
+            <Button x:Name="btn_menu5" Content="Меню" Grid.Column="6" Style="{StaticResource buttonStyle}"></Button>
+            <Button x:Name="btn_menu6" Content="Меню" Grid.Column="7" Style="{StaticResource buttonStyle}"></Button>
+            <Button x:Name="btn_exit"   Grid.Column="8" Style="{StaticResource buttonStyle}" Click="btn_exit_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource textStyle}" FontSize="16">&#xE894;</TextBlock>
+                    <TextBlock>Выход</TextBlock>
+                </StackPanel>
+            </Button>
+        </Grid>
+        <Grid Grid.Row="1">
+            <SplitView x:Name="menuSplitView" DisplayMode="CompactOverlay" CompactPaneLength="0" OpenPaneLength="200">
+                <SplitView.Pane>
+                    <ListBox x:Name="menuListBox" SelectionMode="Single" SelectionChanged="menuListBox_selectionChange">
+                        <ListBoxItem x:Name="ItemHome" >
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Style="{StaticResource itemsIco}" Foreground="AntiqueWhite"/>
+                                <TextBlock Text="Главная"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem  x:Name="ItemDGU1">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource itemsIco}" Foreground="BlueViolet"/>
+                                <TextBlock Text="ДГУ 1" />
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem x:Name="ItemDGU2">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource itemsIco}" Foreground="DarkGreen"/>
+                                <TextBlock Text="ДГУ 2"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem x:Name="ItemDGU3">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource itemsIco}" Foreground="DarkRed"/>
+                                <TextBlock Text="ДГУ 3"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem x:Name="ItemDGU4">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource itemsIco}" Foreground="Indigo"/>
+                                <TextBlock Text="ДГУ 4"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem x:Name="menuItem" Tapped="TextBlock_Tapped">
+                            <FlyoutBase.AttachedFlyout>
+                                <Flyout x:Name="dialogBox1"  Placement="Right">
+                                    <Grid Background="AliceBlue">
+                                        <StackPanel>
+                                            <TextBlock Margin="5" FontStyle="Italic" FontFamily="Sitka Small" RenderTransformOrigin="0.5,0.5" >
+                                                <TextBlock.RenderTransform>
+                                                    <CompositeTransform/>
+                                                </TextBlock.RenderTransform>Настройка соединения</TextBlock>
+                                            <Grid  BorderBrush="Black" BorderThickness="5" VerticalAlignment="Stretch" Padding="0 0 0 10 ">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition/>
+                                                    <RowDefinition/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="2*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel Grid.Column="0" Grid.Row="0">
+                                                    <RadioButton x:FieldModifier="public" x:Name="connectCom" IsChecked="True" GroupName="connectChoose" Padding="6 4 5 0" Content="Связь по COM" FontSize="18"   Margin="5 0 0 0" FontWeight="Bold" FontStyle="Italic"></RadioButton>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <ComboBox x:FieldModifier="public" x:Name="ComboBoxCom" Header="Выбирите COM порт"  BorderThickness="0" FontSize="14" Margin="10 0 0 20" IsDropDownOpen="True" FontFamily="Times New Roman" >
+                                                            <ComboBoxItem IsSelected="True">
+                                                                <x:String>COM1</x:String>
+                                                            </ComboBoxItem>
+                                                            <x:String>COM2</x:String>
+                                                            <x:String>COM3</x:String>
+
+
+                                                        </ComboBox>
+                                                        <Button Content="&#xE117;" FontFamily="Segoe MDL2 Assets" Margin="10 0 0 0" FontSize="25" Click="Button_Click_1"></Button>
+                                                    </StackPanel>
+                                                    <Grid RelativePanel.RightOf="image8" RelativePanel.AlignVerticalCenterWithPanel="True" Margin="0 0 10 15">
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition />
+                                                            <RowDefinition />
+                                                            <RowDefinition />
+                                                            <RowDefinition />
+                                                            <RowDefinition />
+                                                            <RowDefinition />
+                                                            <RowDefinition />
+                                                        </Grid.RowDefinitions>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="0.5*"/>
+                                                            <ColumnDefinition Width="0.3*"/>
+                                                            <ColumnDefinition Width="0.1*"/>
+
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock x:FieldModifier="public" x:Name="textRow1" Margin="0 0 10 0" FontSize="14" Text="Slave адрес " Foreground="Black" VerticalAlignment="Center" HorizontalAlignment="Right" FontStyle="Italic"/>
+                                                        <TextBox x:FieldModifier="public" x:Name="textRowSlaveId" Margin="0 5 0 5" Grid.Column="1" FontSize="14" Text="1" Foreground="Black" VerticalAlignment="Center" MinHeight="2" MinWidth="6" HorizontalAlignment="Center" Padding="0" Width="64" TextAlignment="Center" FontWeight="Bold" BorderThickness="1"/>
+                                                        <!--<TextBlock x:FieldModifier="public" x:Name="textRow12" Grid.Column="2" FontSize="20" Text="V" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFD6C5C5"/>-->
+                                                        <TextBlock x:FieldModifier="public" x:Name="textRow2"  Text="Тайм-аут" Foreground="Black" VerticalAlignment="Center" Grid.Row="1" FontSize="14" HorizontalAlignment="Right" Margin="0,0,10,0" FontStyle="Italic" />
+                                                        <TextBox x:FieldModifier="public" x:Name="textRowTimeOut" Margin="0 5 0 5" Padding="0" Grid.Column="1" Text="2000" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" FontSize="14" MinHeight="0" TextAlignment="Center" FontWeight="Bold" BorderThickness="1" />
+                                                        <TextBlock x:FieldModifier="public" x:Name="textRow22" Grid.Column="2" Text="мсек" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"  Grid.Row="1" FontSize="12" FontStyle="Italic" />
+                                                        <TextBlock x:FieldModifier="public" x:Name="textRow3"  FontSize="14" Text="Интервал посылок" Foreground="Black"  HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="2" Margin="0,0,10,0" FontStyle="Italic" />
+                                                        <TextBox x:FieldModifier="public" x:Name="textRowInterval" Margin="0 5 0 5" Padding="0" FontSize="14" Text="50" Foreground="black"  HorizontalAlignment="Center"  VerticalAlignment="Bottom" Grid.Row="2" Grid.Column="1" MinHeight="0" TextAlignment="Center" FontWeight="Bold" BorderThickness="1"/>
+                                                        <TextBlock x:FieldModifier="public" x:Name="textRow32" FontSize="12" Text="мсек" Foreground="black" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" Grid.Column="2" FontStyle="Italic"/>
+                                                        <TextBlock x:FieldModifier="public" x:Name="textRow4" FontSize="14" Text="Период запросов" Foreground="Black" HorizontalAlignment="Right" Grid.Row="3" Margin="0,0,10,0" VerticalAlignment="Center" FontStyle="Italic"/>
+                                                        <TextBox x:FieldModifier="public" x:Name="textRowPeriod" Margin="0 5 0 5" Padding="0" FontSize="14" Text="500" Foreground="black" HorizontalAlignment="Center" Grid.Row="3" Grid.Column="1" MinHeight="0" VerticalContentAlignment="Stretch" FontWeight="Bold"  TextAlignment="Center" BorderThickness="1"/>
+                                                        <TextBlock x:FieldModifier="public" x:Name="textRow42" Margin="0 5 0 5" FontSize="12" Text="мсек" Foreground="black" HorizontalAlignment="Center" Grid.Row="3" Grid.Column="2" TextAlignment="Center" FontStyle="Italic"/>
+                                                        <TextBlock x:FieldModifier="public" x:Name="textRow14" Grid.Row="4" FontSize="14" Text="№ устройства" Foreground="black" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0" FontStyle="Italic"/>
+                                                        <TextBox x:FieldModifier="public" x:Name="textRowDeviceId" Margin="0 5 0 5" Padding="0" Grid.Row="4" Grid.Column="1" FontSize="14" Text="1" Foreground="black" HorizontalAlignment="Center" VerticalAlignment="Center" MinHeight="0" TextAlignment="Center" FontWeight="Bold" BorderThickness="1" />
+                                                        <TextBlock x:FieldModifier="public" x:Name="textRowDType" Grid.Row="5" FontSize="14" Text="Тип устройства" Foreground="black" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0" FontStyle="Italic"/>
+                                                        <ComboBox x:FieldModifier="public" x:Name="comboDeviceType"  PlaceholderText="ПН-8" FontFamily="Times New Roman" HorizontalAlignment="Stretch" Padding="5 0 0 0"  Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2"  FontSize="14"  Foreground="black"  VerticalAlignment="Center" MinHeight="0"  BorderThickness="0">
+                                                            <x:String>PW2.1</x:String>
+                                                            <x:String>ПН-8</x:String>
+                                                        </ComboBox>
+                                                        <TextBlock x:FieldModifier="public" x:Name="textRowDN" Grid.Row="6" FontSize="14" Text="Выбор устройства" Foreground="black" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0" FontStyle="Italic"/>
+                                                        <ComboBox x:FieldModifier="public" x:Name="comboDeviceNumber"  PlaceholderText="№" FontFamily="Times New Roman" HorizontalAlignment="Stretch" Padding="5 0 0 0"  Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2"  FontSize="14"  Foreground="black"  VerticalAlignment="Center" MinHeight="0"  BorderThickness="0" SelectionChanged="comboDeviceNumber_SelectionChanged">
+                                                            <ComboBoxItem IsSelected="True">
+                                                                <x:String>1</x:String>
+                                                            </ComboBoxItem>
+                                                            <x:String>2</x:String>
+                                                            <x:String>3</x:String>
+                                                            <x:String>4</x:String>
+                                                        </ComboBox>
+                                                    </Grid>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Button x:FieldModifier="public" x:Name="saveBtn" Margin="5 0 10 0" Click="saveBtn_Click" >
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE105;" FontSize="20"></TextBlock>
+                                                                <TextBlock  Margin="10 0 0 0 ">Сохранить</TextBlock>
+                                                            </StackPanel>
+                                                        </Button>
+                                                        <Button Margin="5">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE10A;" FontSize="20"></TextBlock>
+                                                                <TextBlock Margin="10 0 0 0 ">Отменить</TextBlock>
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </StackPanel>
+
+                                                    <StackPanel Margin="5 10 0 0">
+                                                        <RadioButton x:FieldModifier="public" x:Name="connectTcp" GroupName="connectChoose" Padding="5 4 5 5" Content="Связь по TCP" FontSize="18" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" FontWeight="Bold" FontStyle="Italic"></RadioButton>
+                                                        <TextBlock>Введите IP адрес</TextBlock>
+                                                        <TextBox x:FieldModifier="public" x:Name="textRowIpAdres" PlaceholderText="192.168.1.1"></TextBox>
+                                                        <TextBlock>Введите № Порта</TextBlock>
+                                                        <TextBox x:FieldModifier="public" x:Name="textRowPortIP" PlaceholderText="502"></TextBox>
+                                                    </StackPanel>
+
+
+
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="2" Grid.Row="0"  Margin="10 30 10 10">
+                                                    <TextBlock HorizontalAlignment="Center" FontStyle="Italic">Скорость</TextBlock>
+                                                    <StackPanel BorderBrush="Black" BorderThickness="1" Margin="0 0 0 10 ">
+                                                        <RadioButton GroupName="speed" x:FieldModifier="public" x:Name="s9600"  Content="9600"   FontSize="15"  Margin="5,0,0,0"  MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalContentAlignment="Stretch" IsChecked="True" />
+                                                        <RadioButton  GroupName="speed" x:FieldModifier="public" x:Name="s19200" Content="19200"  Margin="5,0,0,0" MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" />
+                                                        <RadioButton  GroupName="speed" x:FieldModifier="public" x:Name="s38400" Content="38400"  Margin="5,0,0,0" MinWidth="0" HorizontalAlignment="Stretch" />
+                                                        <RadioButton  GroupName="speed" x:FieldModifier="public" x:Name="s57600" Content="57600"  Margin="5,0,0,0" MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" />
+                                                        <RadioButton  GroupName="speed" x:FieldModifier="public" x:Name="s115200" Content="115200"  Margin="5,0,0,0" MinWidth="0" HorizontalAlignment="Stretch" />
+                                                    </StackPanel>
+                                                    <TextBlock HorizontalAlignment="Center" FontStyle="Italic">Бит данных</TextBlock>
+                                                    <StackPanel  Margin="0 0 0 10 " Orientation="Vertical" VerticalAlignment="Center" BorderBrush="Black" BorderThickness="1">
+                                                        <RadioButton  GroupName="bit" x:FieldModifier="public" x:Name="bit7" Margin="5,0,0,0">7</RadioButton>
+                                                        <RadioButton  GroupName="bit" x:FieldModifier="public" x:Name="bit8" Margin="5,0,0,0" IsChecked="True">8</RadioButton>
+
+                                                    </StackPanel>
+                                                    <TextBlock HorizontalAlignment="Center" FontStyle="Italic">Четность</TextBlock>
+                                                    <StackPanel  Margin="0 0 0 10 " Orientation="Vertical" VerticalAlignment="Center" BorderBrush="Black" BorderThickness="1">
+                                                        <RadioButton  GroupName="parity" x:FieldModifier="public" x:Name="parityNone" IsChecked="True" Margin="5,0,0,0">Нет</RadioButton>
+                                                        <RadioButton GroupName="parity" x:FieldModifier="public" x:Name="parityOdd"  Margin="5,0,0,0">Чет</RadioButton>
+                                                        <RadioButton GroupName="parity" x:FieldModifier="public" x:Name="parityEven" Margin="5,0,0,0">Нечет</RadioButton>
+                                                    </StackPanel>
+                                                    <TextBlock HorizontalAlignment="Center" FontStyle="Italic">Стоп биты</TextBlock>
+                                                    <StackPanel  Margin="0 0 0 10 " Orientation="Vertical" VerticalAlignment="Center" BorderBrush="Black" BorderThickness="1">
+                                                        <RadioButton GroupName="stopBit" x:FieldModifier="public" x:Name="stopBit1" Margin="5,0,0,0" IsChecked="True">1</RadioButton>
+                                                        <RadioButton GroupName="stopBit" x:FieldModifier="public" x:Name="stopBit2" Margin="5,0,0,0">2</RadioButton>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </Flyout>
+                            </FlyoutBase.AttachedFlyout>
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="&#xE115;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="5 0 20 0"/>
+                                <TextBlock Text="Настройка"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                    </ListBox>
+                </SplitView.Pane>
+                <SplitView.Content>
+                    <Grid>
+                        <Frame x:FieldModifier="public" x:Name="myFrame" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SizeChanged="myFrame_SizeChanged">
+
+                            <!--<FlyoutBase.AttachedFlyout>
+                            <MenuFlyout/>
+                        </FlyoutBase.AttachedFlyout>-->
+                        </Frame>
+
+                    </Grid>
+                </SplitView.Content>
+            </SplitView>
+        </Grid>
+    </Grid>
+</Page>
+
+    

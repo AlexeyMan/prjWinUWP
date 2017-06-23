@@ -1,0 +1,282 @@
+﻿<Page
+    x:Class="scadaPN.homePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:scadaPN"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+    xmlns:behaviors="using:Microsoft.Toolkit.Uwp.UI.Animations.Behaviors"
+    mc:Ignorable="d">
+
+    <Grid x:Name="grid1">
+        <Grid.Background>
+            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                <GradientStop Color="#FF6998BB" Offset="0.797"/>
+                <GradientStop Color="#FF3870A9" Offset="0.078"/>
+            </LinearGradientBrush>
+        </Grid.Background>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0*"/>
+            <RowDefinition Height="250*"/>
+            <RowDefinition Height="250*"/>
+            <RowDefinition Height="250*"/>
+            <RowDefinition Height="250*"/>
+            <RowDefinition Height="40*"/>
+        </Grid.RowDefinitions>
+        <Button x:Name="button" Content="Button"  FontSize="50" HorizontalAlignment="Stretch" Margin="22.473,15.998,23.889,20.871" VerticalAlignment="Stretch" Grid.Row="1" RenderTransformOrigin="0.5,0.5" UseLayoutRounding="False" d:LayoutRounding="Auto" Grid.Column="2" Click="button_Click">
+        </Button>
+        
+        <Grid x:Name="grid" Grid.Row="1" BorderThickness="5" CornerRadius="10" RequestedTheme="Light">
+            <Grid.Background>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FF0D2F51" Offset="0.167"/>
+                    <GradientStop Color="#FF325D8B" Offset="0.442"/>
+                </LinearGradientBrush>
+            </Grid.Background>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="5*"/>
+            </Grid.RowDefinitions>
+            <RelativePanel Grid.Column="0"  Grid.Row="0" CornerRadius="10,10,0,0">
+                <RelativePanel.Background>
+                    <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                        <GradientStop Color="#FF294E75" Offset="0.114"/>
+                        <GradientStop Color="#FF66B0FF" Offset="0.554"/>
+                        <GradientStop Color="#FF0F3356" Offset="1"/>
+                    </LinearGradientBrush>
+                </RelativePanel.Background>
+                <Image x:Name="image" RelativePanel.AlignLeftWithPanel="True"   Source="Assets/alarm_pn.png"/>
+                <Image x:Name="image_Copy" RelativePanel.RightOf="image"   Source="Assets/alarm_pn1.png" />
+                <Image x:Name="image_Copy1" RelativePanel.RightOf="image_Copy"   Source="Assets/alarm_pred_pn1.png" />
+                <Image x:Name="image_Copy2" RelativePanel.RightOf="image_Copy1"  Source="Assets/Auto_run.png" />
+                <Image x:Name="image_Copy3" RelativePanel.RightOf="image_Copy2"  Source="Assets/alarm_pn.png" />
+            </RelativePanel>
+            <RelativePanel Grid.Row="1" >
+                <Image x:Name="image6" Source="Assets/generator_anim.gif" HorizontalAlignment="Left"  />
+                <Image x:Name="image8" RelativePanel.RightOf="image6" VerticalAlignment="Top"  Source="Assets/tank_gen.gif"/>
+                <Grid RelativePanel.RightOf="image8" RelativePanel.AlignVerticalCenterWithPanel="True" >
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="*"/>
+
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="textRow1"  FontSize="20" Text="U" Foreground="#FFD6C5C5" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="textRow11" Grid.Column="1" FontSize="20" Text="5567" Foreground="#FFD6C5C5" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="textRow12" Grid.Column="2" FontSize="20" Text="V" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFD6C5C5"/>
+                    <TextBlock x:Name="textRow2"  Text="P" Foreground="#FFD6C5C5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" />
+                    <TextBlock x:Name="textRow21" Grid.Column="1" Text="5556" Foreground="#FFD6C5C5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" />
+                    <TextBlock x:Name="textRow22" Grid.Column="2" Text="W" Foreground="#FFD6C5C5" HorizontalAlignment="Center" VerticalAlignment="Center"  Grid.Row="1" />
+                    <TextBlock x:Name="textRow3"  FontSize="20" Text="Oil" Foreground="#FFD6C5C5"  HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" />
+                    <TextBlock x:Name="textRow31" FontSize="20" Text="555" Foreground="#FFD6C5C5"  HorizontalAlignment="Center"  VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
+                    <TextBlock x:Name="textRow32" FontSize="20" Text="бар." Foreground="#FFD6C5C5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" Grid.Column="2"/>
+                    <TextBlock x:Name="textRow4" FontSize="20" Text="U" Foreground="#FFD6C5C5" HorizontalAlignment="Center" Grid.Row="3"/>
+                    <TextBlock x:Name="textRow41" FontSize="20" Text="5556" Foreground="#FFD6C5C5" HorizontalAlignment="Center" Grid.Row="3" Grid.Column="1"/>
+                    <TextBlock x:Name="textRow42" FontSize="20" Text="V" Foreground="#FFD6C5C5" HorizontalAlignment="Center" Grid.Row="3" Grid.Column="2"/>
+                    <TextBlock x:Name="textRow5" Text="P" Foreground="#FFD6C5C5" HorizontalAlignment="Center"  Grid.Row="4" />
+                    <TextBlock x:Name="textRow51" Text="5556" Foreground="#FFD6C5C5" HorizontalAlignment="Center" Grid.Row="4" Grid.Column="1"/>
+                    <TextBlock x:Name="textRow52" Text="W" Foreground="#FFD6C5C5" HorizontalAlignment="Center" Grid.Row="4" Grid.Column="2"/>
+                    <TextBlock x:Name="textRow6" FontSize="20" Text="Oil" Foreground="#FFD6C5C5" HorizontalAlignment="Center" Grid.Row="5" />
+                    <TextBlock x:Name="textRow61" FontSize="20" Text="555" Foreground="#FFD6C5C5" HorizontalAlignment="Center" Grid.Row="5" Grid.Column="1" />
+                    <TextBlock x:Name="textRow62" FontSize="20" Text="бар." Foreground="#FFD6C5C5" HorizontalAlignment="Center" Grid.Row="5" Grid.Column="2" />
+                    <TextBlock x:Name="textRow7" Text="P" Foreground="#FFD6C5C5" HorizontalAlignment="Center" Grid.Row="6" />
+                    <TextBlock x:Name="textRow71" Text="5556" Foreground="#FFD6C5C5" HorizontalAlignment="Center" Grid.Row="6" Grid.Column="1"/>
+                    <TextBlock x:Name="textRow72" Text="W" Foreground="#FFD6C5C5" HorizontalAlignment="Center" Grid.Row="6" Grid.Column="2" />
+                </Grid>
+            </RelativePanel>
+        </Grid>
+
+        <Grid Grid.Column="1" Grid.Row="1" BorderThickness="5" CornerRadius="10" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="3.5*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.Background>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FF0D2F51" Offset="0.167"/>
+                    <GradientStop Color="#FF325D8B" Offset="0.442"/>
+                </LinearGradientBrush>
+            </Grid.Background>
+            <StackPanel Orientation="Horizontal" CornerRadius="10,10,0,0" >
+                <StackPanel.Background>
+                    <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                        <GradientStop Color="#FF294E75" Offset="0.114"/>
+                        <GradientStop Color="#FF66B0FF" Offset="0.554"/>
+                        <GradientStop Color="#FF0F3356" Offset="1"/>
+                    </LinearGradientBrush>
+                </StackPanel.Background>
+                <Image x:Name="PN_panel" Source="Assets/pn8_chisch_s1.jpg" Margin="5 2 2 2"/>
+                <!--<Image x:Name="panel"    Source="Assets/alarm_pn.png" />-->
+                <Image x:Name="image_Copy4"   Source="Assets/alarm_pn1.png" Margin="2"/>
+                <Image x:Name="image_Copy6"   Source="Assets/Auto_run.png" Margin="2" />
+                <!--<Image x:Name="image_Copy5"    Source="Assets/fire anim.gif" />
+                <Image x:Name="image_Copy7"   Source="Assets/security anim.gif" />
+                <Image x:Name="image_Copy82"   Source="Assets/fault_fire_system_anim.gif" />
+                <Image x:Name="image_Copy8"   Source="Assets/buzzer_anim.gif" />-->
+
+            </StackPanel>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="0.8*"/>
+                    <ColumnDefinition Width="3*"/>
+                    <ColumnDefinition Width="2.5*"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="2*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Image x:Name="image_Copy80"   Source="Assets/smb_BatG.png" />
+                        <Image x:Name="image_Copy9"    Source="Assets/smb_Fuel_G.png" />
+                        <Image x:Name="image_Copy11"   Source="Assets/smb_OilG.png" />
+                        <Image x:Name="image_Copy22"   Source="Assets/smb_T_CoolantG.png" />
+                    </StackPanel>
+                    <Image x:Name="miniGen" Grid.Row="1"  Source="Assets/generator.png" />
+                    <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Center">
+
+                        <Image x:Name="image_Copy92"    Source="Assets/smb_ServiceG.png" />
+
+
+
+                    </StackPanel>
+                </Grid>
+                <!--<GridView x:Name="gridView"  Margin="1,10,0,0" Grid.Column="2" >
+                    <StackPanel>
+                        <TextBlock x:Name="temperature" Text="{x:Bind VM.ForGen[0].Temperature, Mode=OneWay}"></TextBlock>
+                        <GridView ItemsSource="{x:Bind VM.ForGen, Mode=OneWay}">
+                            <GridView.ItemTemplate>
+                                <DataTemplate x:DataType="local:EventGen">
+                                    <StackPanel>
+                                        <TextBlock x:Name="temp111" Text="{x:Bind Temperature,Mode=OneWay}" />
+                                        <TextBlock x:Name="temp1" Text="{x:Bind Pressure, Mode=OneWay}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </GridView.ItemTemplate>
+                        </GridView>
+                    </StackPanel>
+                </GridView>-->
+                <Grid  Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="0 0 3 3">
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="*"/>
+
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="textRow15"  FontSize="24" Text="U" Foreground="#FFD6C5C5" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="textRow151"  Grid.Column="1" FontSize="20" Text="5567" Foreground="#FFCBE42A" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="textRow152" Grid.Column="2" FontSize="20" Text="V" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFD6C5C5"/>
+                    <TextBlock x:Name="textRow542"  FontSize="24" Text="P" Foreground="#FFD6C5C5" HorizontalAlignment="Center" VerticalAlignment="Center"  Grid.Row="1" />
+                    <TextBlock x:Name="textRow251" Grid.Column="1" Text="5556" Foreground="#FFCBE42A" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" FontSize="20" />
+                    <TextBlock x:Name="textRow252" Grid.Column="2" Text="W" Foreground="#FFD6C5C5" HorizontalAlignment="Center" VerticalAlignment="Center"  Grid.Row="1" FontSize="20" />
+                    <!--<TextBlock x:Name="textRow35"  FontSize="24" Text="Poil" Foreground="#FFD6C5C5"  HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" />-->
+                    <Image x:Name="image_Copy131"  Grid.Row="2" Source="Assets/smb_Oil.png" />
+                    <TextBlock x:Name="textRow351" FontSize="20" Text="555" Foreground="#FFCBE42A"  HorizontalAlignment="Center"  VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
+                    <TextBlock x:Name="textRow532" FontSize="20" Text="бар" Foreground="#FFD6C5C5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" Grid.Column="2"/>
+                    <!--<TextBlock x:Name="textRow44" FontSize="24" Text="U" Foreground="#FFD6C5C5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="3"/>-->
+                    <Image x:Name="image_Copy2212" Grid.Row="3"  Source="Assets/smb_T_Coolant.png" />
+                    <TextBlock x:Name="textRow641" FontSize="20" Text="5556" Foreground="#FFCBE42A" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="3" Grid.Column="1"/>
+                    <TextBlock x:Name="textRow642" FontSize="20" Text="С" Foreground="#FFD6C5C5" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="3" Grid.Column="2"/>
+                    <!--<TextBlock x:Name="textRow56"  FontSize="24" Text="P" Foreground="#FFD6C5C5" HorizontalAlignment="Center" VerticalAlignment="Center"  Grid.Row="4" />-->
+                    <TextBlock x:Name="textRow541" Text="5556" Foreground="#FFCBE42A" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="4" Grid.Column="1" FontSize="20"/>
+                    <TextBlock x:Name="textRow82" Text="W" Foreground="#FFD6C5C5" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="4" Grid.Column="2" FontSize="20"/>
+                    <Image x:Name="image_Copy801" Grid.Row="4"  Source="Assets/smb_Bat.png" />
+                    <Image x:Name="image_time" Grid.Row="5"  Source="Assets/Time.png" />
+                    <!--<TextBlock x:Name="textRow66" FontSize="24" Text="МЧ" Foreground="#FFD6C5C5" HorizontalAlignment="Center"  VerticalAlignment="Center" Grid.Row="5" />-->
+                    <TextBlock x:Name="textRow361" FontSize="20" Text="555" Foreground="#FFCBE42A" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="5" Grid.Column="1" />
+                    <Image x:Name="image_main" Grid.Row="6"  Source="Assets/main.png" />
+                    <TextBlock x:Name="textRow662" FontSize="20" Text="час" Foreground="#FFD6C5C5" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="5" Grid.Column="2" />
+                    <!--<TextBlock x:Name="textRow734"  FontSize="24" Text="Pc" Foreground="#FFD6C5C5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="6" />-->
+                    <TextBlock x:Name="textRow704" Text="5556" Foreground="#FFCBE42A" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="6" Grid.Column="1" FontSize="20"/>
+                    <TextBlock x:Name="textRow722" Text="V" Foreground="#FFD6C5C5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="6" Grid.Column="2" FontSize="20" />
+                </Grid>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="0.4*"/>
+                        <RowDefinition Height="5*"/>
+                        <RowDefinition Height="1*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="2*"/>
+                    </Grid.ColumnDefinitions>
+                    <Image x:Name="image38" Grid.ColumnSpan="3" Source="Assets/tank_pic.png" Grid.RowSpan="3"  VerticalAlignment="Top" HorizontalAlignment="Right" Stretch="Fill" />
+                    <Image x:Name="level" Source="Assets/level_fuel.gif" Grid.Row="1" Grid.Column="1" Stretch="Fill"  VerticalAlignment="Top"/>
+
+                    <Image x:Name="line" Source="Assets/line_fuel.png" Grid.Column="2" Grid.Row="1" HorizontalAlignment="Left" />
+                    <Image x:Name="pic" Source="Assets/s_Fuel_org.png" Grid.Column="2" Grid.Row="1" Margin="3" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                    <TextBlock x:Name="textRow131"  Grid.ColumnSpan="3" Grid.Row="2" FontSize="15" Text="100%" Foreground="#FFCBE42A" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    <Grid Grid.Column="1" Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Rectangle Fill="#2783AD" Grid.RowSpan="15" HorizontalAlignment="Stretch" Margin="1" />
+                    </Grid>
+                </Grid>
+
+            </Grid>
+        </Grid>
+        <Image x:Name="image7" Source="Assets/genset.png"   Grid.Row="2" VerticalAlignment="Top"/>
+        <TextBlock x:Name="testBind" Text="{x:Bind Sp.name}" Grid.Column="1" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <Button x:Name="button1" Content="Button" Grid.Column="3" Grid.Row="1" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Click="button1_Click" />
+        <Button x:Name="button2" Grid.Column="3" HorizontalAlignment="Stretch"  Grid.Row="2" VerticalAlignment="Stretch" Click="button2_Click">
+            <VariableSizedWrapGrid HorizontalAlignment="Left" Height="100" Margin="20,27,-120,-127" VerticalAlignment="Top" Width="100"/>
+        </Button>
+        <VariableSizedWrapGrid HorizontalAlignment="Left" Height="100" Grid.RowSpan="2" VerticalAlignment="Top" Width="100"/>
+
+    </Grid>
+</Page>
